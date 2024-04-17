@@ -18,12 +18,14 @@ const Message =  ({msg ,authenticatedUser}:{msg : string, authenticatedUser:stri
   }
 
   const data= convertBufferToString(JSON.parse(msg).data)
-  console.log(data);
+  const username = JSON.parse(data).username;
+  const message = JSON.parse(data).value;
+  console.log('THIS IS MESSAFGE :', username , message);
   return (
     <div className=" flex gap-2 justify-start items-center p-1 mt-2">
-      <div> <Avatar authenticatedUser={data ? data : ''} /></div>
+      <div> <Avatar authenticatedUser={username} /></div>
       <div className=" bg-green-400 rounded-xl text-white px-3 py-2 flex  gap-2 item-center justify-center shadow-lg">
-          <div> {data}</div>
+          <div> {message}</div>
       </div>
     </div>
   )

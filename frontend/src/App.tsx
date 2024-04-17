@@ -21,7 +21,7 @@ const useSocket = ()=>{
 
 function App() {
   const [value , setValue ] = useState<string>('');
-  const [message , setMessage] = useState<String[] | undefined>([])
+  const [message , setMessage] = useState<string[] | undefined>([])
   const [authenticatedUser , setAuthenticatedUser] = useState<string>('');
   const socket  = useSocket();
   const send = (value : string)=>{

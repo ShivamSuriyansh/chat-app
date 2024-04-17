@@ -16,7 +16,11 @@ const Chat = ({text , send , value , setValue ,authenticatedUser}:{text : any , 
     <div className=" send-input flex gap-2 w-full mt-3 "> 
             <input type="text" value={value}  onChange={(e)=> setValue(e.target.value)} placeholder="message" className=" bg-white text-black p-2 w-[27.5rem] rounded-2xl placeholder:text-slate-400 ring-2 ring-lime-200 focus:ring-lime-500 focus:outline-none text-wrap" />
             <button onClick={()=>{
-                send(value);
+                const message = {
+                    value,
+                    username : authenticatedUser
+                }
+                send(JSON.stringify(message));
                 setValue('');
                 }} className=" bg-slate-800 border border-slate-950 rounded-full text-white p-2 hover:bg-black hover:border hover:border-slate-700"> 
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
