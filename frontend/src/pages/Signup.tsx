@@ -2,25 +2,21 @@ import { useNavigate } from "react-router-dom"
 import axios from 'axios'
 import { useState } from "react"
 
-
-const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| null)=> void ,setAuthenticatedUser: (name: string)=> void}) => {
+const Signup = () => {
 
   const [username , setUsername] = useState<string>('');
+  const [name , setName] = useState<string>('');
   const [password , setPassword] = useState<string>('');
 
-
-
-  const handleLogin = async (username : string , password:string )=>{
-    //axios/ fetch request to /login route
-    const response = await axios.post('http://localhost:8080/api/login', {
-      username,
-      password
+  const handleSignup = async (username : string , password:string )=>{
+    const response = await axios.post('http://localhost:8080/api/signup', {
+      username ,
+      password,
+      name
     })
-    console.log(response.data.name);
-    setAuthenticatedUser(response.data.name);
-    localStorage.setItem('token',response.data.token);
-    setToken(localStorage.getItem("token"));
-    navigate("/chat")
+    // localStorage.setItem('token',response.data.token);
+    console.log(response);
+    // setAuthenticatedUser(response.data.user.username);
   }
   
   const navigate = useNavigate();
@@ -34,6 +30,10 @@ const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| nu
                   Sign in to your account
               </h1>
               <form className="space-y-4 md:space-y-6" action="#">
+                  <div>
+                      <label  className="block mb-2 text-sm font-medium text-gray-900 ">Your Name</label>
+                      <input type="email" name="email" id="email" value={name} onChange={(e)=>setName(e.target.value)} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 " placeholder="John Doe"  />
+                  </div>
                   <div>
                       <label  className="block mb-2 text-sm font-medium text-gray-900 ">Your email</label>
                       <input type="email" name="email" id="email" value={username} onChange={(e)=>setUsername(e.target.value)} className="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 " placeholder="name@company.com" required />
@@ -54,10 +54,11 @@ const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| nu
                       <a href="#" className="text-sm font-medium text-primary-600 hover:underline">Forgot password?</a>
                   </div>
                   <button type="submit" onClick={()=>{
-                    handleLogin(username , password)
+                    handleSignup(username , password)
+                    navigate("/login")
                     }} className="w-full text-black border border-slate-500 hover:bg-black hover:text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center ">Sign in</button>
                   <p className="text-sm font-light text-gray-500 ">
-                      Don’t have an account yet? <a href="signup" className="font-medium text-primary-600 hover:underline ">Sign up</a>
+                      Already have an account ? <a href="/" className="font-medium text-primary-600 hover:underline ">Sign In</a>
                   </p>
               </form>
           </div>
@@ -67,4 +68,4 @@ const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| nu
   )
 }
 
-export default Login
+export default Signup

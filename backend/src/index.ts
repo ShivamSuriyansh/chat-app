@@ -1,55 +1,118 @@
 import express from 'express'
-import { WebSocket, WebSocketServer } from 'ws'
+import { WebSocketServer } from 'ws'
+import jwt from 'jsonwebtoken'
 const cors = require('cors')
 
 const app = express();
 app.use(cors())
-const httpServer = app.listen(8080);
-const wss = new WebSocketServer({server: httpServer});
+export const httpServer = app.listen(8080);
+export const wss = new WebSocketServer({ noServer: true });
+
 const rooms = new Map();
 
 import router from './routes/routes'
+import { userAuth } from './middleware/auth';
+import { JWT_SECRET } from './config';
 
 
 app.use(express.json());
-app.use('/api', router)
+app.use('/api', router);
+app.use('/user' ,userAuth,  router);
 
+const wsMetadata = new Map();
 
-class SocketWithClientId {
-    socket: WebSocket;
-    clientId: string;
-  
-    constructor(socket: WebSocket) {
-      this.socket = socket;
-      this.clientId = generateUniqueID();
-    }
-  }
-
-function generateUniqueID(): string {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-    }
-    return s4() + s4() + '-' + s4();
-}
-
-wss.on('connection',(socket)=>{
-    socket.on('error', (err)=>console.error(err));
-    //create a new key on socket( unique identifier ) so that on client side we can identify which user send what 
-    const socketWithClientId = new SocketWithClientId(socket);
-
-    socketWithClientId.socket.on('message',(data , isBinary)=>{
-        const message = {
-            clientId : socketWithClientId.clientId,
-            data 
+httpServer.on('upgrade', (request , socket , head)=>{
+    const url = request.url ?? '/';
+    const pathname = new URL(url, `http://${request.headers.host}`).pathname;
+    
+    
+    if(pathname=='/user/chat'){
+        const params = new URLSearchParams(request.url?.split('?')[1]);
+        const token = params.get('token');
+        const roomCode = params.get('room');
+        console.log(roomCode)
+        if (!token) {
+            socket.destroy();
+            return;
         }
-        wss.clients.forEach((client , req)=>{
-            if(client.readyState == WebSocket.OPEN){
-                // console.log('Client: ',client);
-                client.send(JSON.stringify(message), {binary: isBinary})
-                // console.log(data.toString());
-            }
-        })
-    })
+        //@ts-ignore
+        const userId = request.userId;
+        console.log('userID: ',userId);
+        
+        console.log('request token ', token);
+        console.log('roomcode:  ', roomCode);
 
-    socket.send('Connection Established!!');
+        try{
+            if(!token){
+                throw new Error("Token not provided");
+            }
+
+            const verified = jwt.verify(token , JWT_SECRET);
+            wss.handleUpgrade(request, socket , head , (ws)=>{
+                // ws.userId = verified.id;
+                // //@ts-ignore
+                // ws.roomCode = roomCode;
+                
+                //@ts-ignore
+                wsMetadata.set(ws, { userId: verified.id, roomCode });
+                if (!rooms.has(roomCode)) {
+                    rooms.set(roomCode, new Set());
+                }
+                rooms.get(roomCode).add(ws);
+                wss.emit('connection' , ws , request);
+            })
+        }catch(e){
+            console.error('Authentication error:', e);
+            socket.destroy();
+        }
+        
+    }else{
+        console.log('does not work')
+    }
 })
+
+wss.on('connection', (socket, request) => {
+    console.log('New WebSocket connection');
+  
+    socket.on('error', (err) => console.error(err));
+  
+    socket.on('message', (data, isBinary) => {
+        const metadata = wsMetadata.get(socket);
+        if (!metadata) return;
+      const message = {
+        //@ts-ignore
+        user:  metadata.userId, // Attach user information to the message
+        data,
+      };
+      console.log('message: ',message)
+
+      //rooms login
+      //@ts-ignore
+        const room = rooms.get(metadata.roomCode)
+        if (room) {
+            room.forEach((client:any) => {
+                if (client.readyState === client.OPEN) {
+                    client.send(JSON.stringify(message), { binary: isBinary });
+                }
+            });
+        }else{
+            console.log('nah i would wiin');
+            console.log(wsMetadata.get(socket));
+        }
+    });
+
+    socket.on('close', () => {
+        //@ts-ignore
+        const socketRoomCode = socket.roomCode; 
+        const room = rooms.get(socketRoomCode);
+        if (room) {
+            room.delete(socket);
+            if (room.size === 0) {
+                rooms.delete(socketRoomCode);
+            }
+        }
+        wsMetadata.delete(socket); 
+    });
+  
+    socket.send('Connection Established!!');
+  });

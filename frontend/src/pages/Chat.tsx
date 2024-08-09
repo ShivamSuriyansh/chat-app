@@ -1,15 +1,37 @@
 
+import { useNavigate } from "react-router-dom"
 import Message from "../components/Message"
+import { useEffect, useRef } from "react";
 
-const Chat = ({text , send , value , setValue ,authenticatedUser}:{text : any ,  send :(value:string)=>void , value :string , setValue : (value:string)=>void ,authenticatedUser:string}) => {
+
+const Chat = ({text , send , value , setValue ,authenticatedUser }:{text : any ,  send :(value:string)=>void , value :string , setValue : (value:string)=>void , authenticatedUser:string}) => {
+    const navigate = useNavigate();
+    useEffect(()=>{
+        if(!authenticatedUser || !localStorage.getItem('token')){
+            navigate('/');
+        }
+    },[authenticatedUser])
+    console.log("text: ",authenticatedUser)
+
+    const messageEndRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(()=>{
+        const scrollBottom = ()=>{
+            messageEndRef.current?.scrollIntoView({behavior: 'smooth'})
+        }
+        scrollBottom();
+    },[text])
+
+
   return (
-    <div className=" flex flex-col gap-2  p-2">
-    <div className=" bg-green-200 w-[30rem] p-10 rounded-xl flex flex-col gap-4 max-h-[30rem] overflow-auto min-h-[25rem] shadow-lg">
+    <div className=" flex flex-col gap-2  p-2 overflow-y-auto">
+    <div className=" bg-green-200 w-[30rem] px-3 py-2 rounded-xl flex flex-col gap-4 max-h-[30rem] overflow-auto min-h-[25rem] shadow-lg">
         <div className=" message">
             {text && text.map((msg: string , i : number)=> (
-            <div key={i}>
+            <div  key={i}>
                 <Message msg={msg} authenticatedUser={authenticatedUser} />
             </div>))}
+            <div ref={messageEndRef} />
         </div>
         
     </div>
