@@ -1,6 +1,6 @@
 import { Avatar } from "./Avatar"
 
-const Message =  ({msg ,authenticatedUser}:{msg : string, authenticatedUser: string}) => {
+const Message =  ({msg ,authenticatedUser, previousUsername}:{msg : string, authenticatedUser: string, previousUsername:string}) => {
 
   function convertBufferToString(bufferData :any) {
     if (!bufferData || !bufferData.type || bufferData.type !== 'Buffer') {
@@ -13,43 +13,76 @@ const Message =  ({msg ,authenticatedUser}:{msg : string, authenticatedUser: str
       return decoder.decode(new Uint8Array(bufferData.data));
     }
   
-    // Fallback for older browsers (less efficient)
+    // Fallback for older browsers (less efficient) 
     return String.fromCharCode.apply(String, bufferData.data);
   }
 
   const data= convertBufferToString(JSON.parse(msg).data)
+  // console.log('%%%%%%%%%%%%%%%%%%%%',data);
+  // const username = JSON.parse(data).username || null;
   const username = JSON.parse(data).username || null;
-  const message = JSON.parse(data).value || null;
-  console.log('THIS IS Message :', username , message);
+  // const message = JSON.parse(data).value || null;
+  const message = JSON.parse(data).content || null;
+  const sent = JSON.parse(data).sentAt;
+  const timeOnly = new Date(sent).toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  // console.log('((((((((((',username)
+  // console.log('THIS IS Message :', username , message);
   const pos = authenticatedUser===username ? "end" : "start";
-  return (
-    <div className={`flex justify-${pos} max-w-lg`}>
-    <div className=" flex gap-2 justify-start items-center p-1 mt-2">
-    {pos === 'start' ? (
-  <div className=" flex gap-1">
-    <Avatar authenticatedUser={username} />
-    <div className="bg-green-400 rounded-lg text-white flex flex-col items-center justify-start shadow-lg">
-      <div className="text-slate-500 font-semibold text-xs bg-green-500 rounded-t-lg px-2 w-full">
-        {username}
-      </div>
-      <div className="text-sm px-2 py-1 max-w-[20rem]">{message}</div>
-    </div>
-  </div>
-) : (
-  <div className="flex gap-1 ">
-    <div className="bg-green-400 rounded-lg text-white flex flex-col items-center justify-start shadow-lg">
-      <div className="text-slate-500 font-semibold text-xs bg-green-500 rounded-t-lg px-2 w-full">
-        {username}
-      </div>
-      <div className="text-sm px-2 py-1 max-w-[20rem]">{message}</div>
-    </div>
-    <Avatar authenticatedUser={username} />
-  </div>
-)}
+  const previousUsername1 = convertBufferToString(JSON.parse(previousUsername || '{}').data);
+  console.log('Hiiiii', JSON.parse(previousUsername1 || '{}').username)
+  const showAvatar = JSON.parse(previousUsername1 || '{}').username !== username
+  console.log(previousUsername1 , username)
 
+
+  return (
+    <div className={`flex justify-${pos} max-w-full`}>
+      <div className="flex gap-1 justify-end items-center p-1">
+        {pos === 'start' ? (
+          <div className="flex gap-0">
+              <div className={`${!showAvatar ? 'opacity-0' : ""}`}>
+                <Avatar authenticatedUser={username}  />
+              </div>
+            <div className="rounded-lg text-white flex flex-col items-center justify-start  mx-2">
+              {showAvatar && 
+                <div className="text-slate-900 font-semibold text-xs rounded-t-lg w-full text-start py-1">
+                  {username}
+                </div>
+              }
+              <div className="bg-slate-50 flex justify-center items-end gap-2 shadow-xl rounded-bl-lg rounded-tr-lg  px-1 py-1">
+                <div className="text-sm px-2 py-1 max-w-[30rem] text-slate-900">
+                  {message}
+                </div>
+                <div className="text-[10px] text-black">{timeOnly}</div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-0">
+              
+            <div className="rounded-lg text-white flex flex-col items-center justify-start  mx-2">
+              {showAvatar && 
+                <div className="text-slate-900 font-semibold text-xs rounded-t-lg w-full text-end py-1">
+                  {username}
+                </div>
+              }
+              <div className="bg-teal-400 flex justify-center items-end gap-2 shadow-xl rounded-br-lg rounded-tl-lg  px-1 py-1">
+                <div className="text-sm px-2 py-1 max-w-[30rem] text-slate-900">
+                  {message}
+                </div>
+                <div className="text-[10px] text-black">{timeOnly}</div>
+              </div>
+            </div>
+            <div className={`${!showAvatar ? 'opacity-0' : ""}`}>
+                <Avatar authenticatedUser={username}  />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
-    </div>
-  )
+  );
 }
 
 export default Message

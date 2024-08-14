@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom"
 import axios from 'axios'
 import { useState } from "react"
+import { deplUrlHttp } from "../config";
+
 
 const Signup = () => {
 
@@ -9,7 +11,7 @@ const Signup = () => {
   const [password , setPassword] = useState<string>('');
 
   const handleSignup = async (username : string , password:string )=>{
-    const response = await axios.post('http://localhost:8080/api/signup', {
+    const response = await axios.post(`${deplUrlHttp}/api/signup`, {
       username ,
       password,
       name

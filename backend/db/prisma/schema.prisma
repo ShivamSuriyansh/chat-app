@@ -14,26 +14,78 @@ datasource db {
 }
 
 model User {
-  id         String    @id @default(uuid())
-  username   String    @unique
-  password   String
-  name       String   @default("username")
-  rooms      String?
-  friendlist String[]  @default([])
-  Message    Message[]
+  id               String    @id @default(uuid())
+  username         String    @unique
+  password         String
+  name             String
+  rooms            Room[]    @relation("UserRooms")
+  friendlist       String[]  @default([])
+  messagesSent     Message[] @relation("SenderMessages")
+  messagesReceived Message[] @relation("ReceiverMessages")
+
+  friendRequestsSent     FriendRequest[] @relation("SentRequests")
+  friendRequestsReceived FriendRequest[] @relation("ReceivedRequests")
+
+  friends   Friends[] @relation("UserFriends")
+  friendsOf Friends[] @relation("FriendOfUser")
+}
+
+model Friends {
+  id       String @id @default(uuid())
+  userId   String
+  friendId String
+
+  user   User @relation("UserFriends", fields: [userId], references: [id])
+  friend User @relation("FriendOfUser", fields: [friendId], references: [id])
+
+  // This constraint ensures that the same friendship isn't duplicated
+  @@unique([userId, friendId])
 }
 
 model Message {
   id      String   @id @default(uuid())
   content String[]
   userId  String
-  user    User     @relation(fields: [userId], references: [id])
-  rooms   Rooms[]
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  senderId   String
+  receiverId String
+
+  sentAt      DateTime  @default(now())
+  deliveredAt DateTime?
+
+  sender   User @relation("SenderMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceiverMessages", fields: [receiverId], references: [id])
+
+  status MessageStatus @default(SENT)
 }
 
-model Rooms {
-  id        String   @id @default(uuid())
-  users     String[]
-  messageId String
-  message   Message  @relation(fields: [messageId], references: [id])
+model Room {
+  id           String    @id @default(uuid())
+  messages     Message[]
+  participants User[]    @relation("UserRooms")
+}
+
+model FriendRequest {
+  id         String              @id @default(uuid())
+  senderId   String
+  receiverId String
+  status     FriendRequestStatus @default(PENDING)
+  sentAt     DateTime            @default(now())
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id])
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
 }

@@ -1,0 +1,15 @@
+/* globals.css */
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px; /* Thin scrollbar */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #f0f0f0; /* Light gray for track */
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #000; /* Black color for thumb */
+    border-radius: 9999px; /* Fully rounded thumb */
+  }
+  

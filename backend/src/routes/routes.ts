@@ -27,11 +27,10 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign({ id: user.id }, JWT_SECRET);
-        const name = user.name;
 
         return res.json({
             token,
-            name
+            user
         });
     } catch (err) {
         console.error(err);
@@ -82,23 +81,6 @@ router.post('/signup', async (req,res)=>{
 
 
 //---------------------------------------
-class SocketWithClientId {
-    socket: WebSocket;
-    clientId: string;
-  
-    constructor(socket: WebSocket) {
-      this.socket = socket;
-      this.clientId = generateUniqueID();
-    }
-  }
-
-function generateUniqueID(): string {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-    }
-    return s4() + s4() + '-' + s4();
-}
-
 
 router.get('/chat',(req,res)=>{
     //@ts-ignore
@@ -108,29 +90,166 @@ router.get('/chat',(req,res)=>{
 })
 
 
-// wss.on('connection',(socket)=>{
-//     socket.on('error', (err)=>console.error(err));
-//     //create a new key on socket( unique identifier ) so that on client side we can identify which user send what 
-//     const socketWithClientId = new SocketWithClientId(socket);
+//---------------------------------------Friend Request-------------------------------------
 
-//     socketWithClientId.socket.on('message',(data , isBinary)=>{
-//         const message = {
-//             clientId : socketWithClientId.clientId,
-//             data 
-//         }
-//         wss.clients.forEach((client , req)=>{
-//             if(client.readyState == WebSocket.OPEN){
-//                 // console.log('Client: ',client);
-//                 console.log('message: ' , message);
-//                 client.send(JSON.stringify(message), {binary: isBinary})
-//                 // console.log(data.toString());
-//             }
-//         })
-//     })
+router.post('/friendRequest' , async(req,res)=>{
+    const {senderId , receiverMail } = req.body;  
 
-//     socket.send('Connection Established!!');
-// })
+    try{
+        const receiver = await prisma.user.findUnique({
+            where: {
+                username: receiverMail,
+            },
+        });
+
+        if(!receiver){
+            return res.status(404).json({
+                error: "user not found"
+            })
+        }
+
+        const existingFriendRequest = await prisma.friendRequest.findFirst({
+            where : {
+                senderId : senderId,
+                receiverId: receiver.id,
+                status : 'PENDING'
+            }
+        })
+
+        if(existingFriendRequest){
+            return res.status(400).json({
+                error: "Request Already Sent"
+            })
+        }
+
+        const friendRequest = await prisma.friendRequest.create({
+            data: {
+                senderId : senderId,
+                receiverId : receiver.id
+            }
+        })
+
+        return res.status(201).json({
+            friendRequest
+        })
+
+    }catch(e){
+        console.log(e);
+        res.status(411).json({
+            error: "Request Failed !"
+        })
+    }
+})
+
+//-----------------Get friend requests:
+
+router.get('/friendRequest' , async(req,res)=>{
+    const receiverId = req.query.receiverId as string;
+    if (!receiverId) {
+        return res.status(400).json({ error: 'Sender ID is required' });
+    }
+    try{
+        const friendRequests = await prisma.friendRequest.findMany({
+            where : {
+                receiverId,
+                status: 'PENDING'
+            }
+           
+        })
+        return res.json(friendRequests);
+    }catch(e){
+        console.error(e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+})
 
 
+//---------------------------------------------------FRIENDS---------------------------------
+router.get('/friends' , async (req,res)=>{
+    const {userId} = req.body;
+    const friends = await prisma.user.findMany({
+        where: {
+            id: userId
+        }
+    })
+})
+
+
+router.post('/acceptRequest' , async(req,res)=>{
+    const {senderId , receiverId} = req.body;
+    try{
+        await prisma.$transaction( async tx =>{
+            const user = await tx.user.findFirst({
+                where : {
+                    id: receiverId // since it is received by current user
+                }
+            })
+            if(!user){
+                return res.status(404).json({
+                    error: "User not Found"
+                })
+            }
+
+            const friendReq = await tx.friendRequest.findFirst({
+                where : {
+                    senderId,
+                    receiverId,
+                    status: 'PENDING'
+                }
+            })
+
+            if(!friendReq){
+                return res.status(404).json({
+                    error: "Friend Reqeust not Found Send Again"
+                })
+            }
+            await tx.friendRequest.update({
+                where: { id: friendReq.id },
+                data: { status: 'ACCEPTED' },
+            });
+
+
+            await tx.friends.create({
+                data: {
+                  userId: receiverId,
+                  friendId: senderId,
+                },
+              });
+        
+              await tx.friends.create({
+                data: {
+                  userId: senderId,
+                  friendId: receiverId,
+                },
+              });
+
+              return res.status(200).json({
+                message: "Friend request accepted successfully",
+              });
+
+        })
+    }catch(e){
+        console.error(e);
+        return res.status(500).json({
+        error: "An error occurred while accepting the friend request",
+        });
+    }
+})
+
+router.post('/declineRequest', async (req, res) => {
+    const { senderId, receiverId } = req.body;
+  
+    try {
+      await prisma.friendRequest.updateMany({
+        where: { senderId, receiverId, status: 'PENDING' },
+        data: { status: 'REJECTED' },
+      });
+  
+      return res.status(200).json({ message: "Friend request declined" });
+    } catch (e) {
+      console.error(e);
+      return res.status(500).json({ error: "An error occurred while declining the friend request" });
+    }
+  });
 
 export default router;
