@@ -23,7 +23,7 @@ const AddFriends = ({ handleToggleAddFriend , handleShowToast }: {handleToggleAd
   };
 
   return (
-    <div className="w-full h-full bg-teal-700 p-4 rounded-lg relative transition-all duration-300">
+    <div className="w-full z-1 h-full bg-teal-700 p-4 rounded-lg relative transition-all duration-300">
       <button
         onClick={handleToggleAddFriend}
         className="absolute top-2 right-2 text-white h-2 w-2 hover:text-gray-300"

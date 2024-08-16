@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import EmojiPicker from 'emoji-picker-react';
 
 interface SendMessageProps{
     value : string;
@@ -9,6 +10,12 @@ interface SendMessageProps{
 
 const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMessage , inputRef}) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
+    const [openEmote , setOpenEmote] = useState<boolean>(false);
+
+    const handleEmojiClick = (emoji:any)=>{
+        console.log(emoji); 
+        setDebouncedValue(prev => prev+ emoji.emoji)
+    }
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -67,10 +74,15 @@ const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMe
                     </svg>
                     <span className="sr-only">Upload image</span>
                 </button>
+                <div className={`${openEmote ? 'flex': 'hidden'} absolute left-[39.2rem] top-[39%]`}>
+                    <EmojiPicker width={350} height={350} onEmojiClick={(e)=>handleEmojiClick(e)}/>
+                </div>
                 <button
                     type="button"
                     className="p-2 text-gray-400 rounded-lg cursor-pointer hover:text-gray-900 hover:bg-white "
+                    onClick={()=>setOpenEmote(prev => !prev)}
                     >
+                    
                     <svg
                         className="w-5 h-5"
                         aria-hidden="true"
@@ -98,7 +110,10 @@ const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMe
                     placeholder="Your message..."
                     />
                 <button
-                    onClick={sendMessage}
+                    onClick={()=>{
+                        sendMessage();
+                        setOpenEmote(false);
+                    }}
                     type="submit"
                     className="inline-flex justify-center p-3 text-black rounded-lg outline-none cursor-pointer hover:bg-white "
                     >

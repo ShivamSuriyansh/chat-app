@@ -150,12 +150,20 @@ router.get('/friendRequest' , async(req,res)=>{
     }
     try{
         const friendRequests = await prisma.friendRequest.findMany({
-            where : {
+            where: {
                 receiverId,
-                status: 'PENDING'
-            }
-           
-        })
+                status: 'PENDING',
+            },
+            include: {
+                sender: {
+                    select: {
+                        id: true,
+                        username: true,
+                        name: true,
+                    },
+                },
+            },
+        });
         return res.json(friendRequests);
     }catch(e){
         console.error(e);
@@ -165,16 +173,6 @@ router.get('/friendRequest' , async(req,res)=>{
 
 
 //---------------------------------------------------FRIENDS---------------------------------
-router.get('/friends' , async (req,res)=>{
-    const {userId} = req.body;
-    const friends = await prisma.user.findMany({
-        where: {
-            id: userId
-        }
-    })
-})
-
-
 router.post('/acceptRequest' , async(req,res)=>{
     const {senderId , receiverId} = req.body;
     try{
@@ -250,6 +248,103 @@ router.post('/declineRequest', async (req, res) => {
       console.error(e);
       return res.status(500).json({ error: "An error occurred while declining the friend request" });
     }
-  });
+});
+
+
+router.get('/friends' ,async (req,res)=>{
+    const userId = req.query.userId as string;
+    const user = await prisma.user.findFirst({
+        where: {
+            id: userId
+        }
+    })
+    if(!user){
+        return res.status(404).json({
+            error: "User doesn't exist"
+        })
+    }
+
+    try{
+        const friends = await prisma.friends.findMany({
+            where: { userId: user.id },
+            include: {
+                friend: {
+                    select: {
+                        id: true,
+                        username: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+        return res.json({
+            friends
+        })
+    }catch(e){
+        console.log('error while getting friends',e);
+        return res.status(500).json({
+            error: "Internal Server Error while Getting Friends"
+        })
+    }
+
+})
+
+//-------------------------------------GET OR CREATE ROOMS-------------------------------------------------------
+router.post('/getOrCreateRoom' , async(req,res)=>{
+    const { userId , friendId } = req.body;
+    try {
+        const isFriendshipExist = await prisma.friends.findFirst({
+            where : {
+                userId,
+                friendId
+            }
+        })
+        if(!isFriendshipExist){
+            return res.status(403).json({
+                error: "you are not friends with this user"
+            })  
+        }
+        let room = await prisma.room.findFirst({
+            where : {
+                participants : {
+                    every : {
+                        id: {
+                            in : [userId , friendId]
+                        }
+                    }
+                }
+            }
+        })
+
+        if(!room){
+            room = await prisma.room.create({
+                data: {
+                    participants : {
+                        connect : [{id: userId}. {id: friendId}]
+                    }
+                }
+            })
+        }
+        return res.json({room})
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ error : "Internal Server Error "})
+    }   
+})
+
+//-------------------------------------------- SEND OR RECIEVE MESSAGE---------------------------------
+router.post('/sendMessage' , async (req,res)=>{
+    const { roomId, senderId, receiverId, content } = req.body;
+    try{
+        const message =  await prisma.message.create({
+            data : {
+                content,
+                senderId,
+                receiverId,
+                roomId
+            }
+        })
+    }
+})
 
 export default router;

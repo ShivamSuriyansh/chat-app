@@ -41,25 +41,24 @@ model Friends {
   // This constraint ensures that the same friendship isn't duplicated
   @@unique([userId, friendId])
 }
-
 model Message {
-  id      String   @id @default(uuid())
-  content String[]
-  userId  String
-
-  roomId String
-  room   Room   @relation(fields: [roomId], references: [id])
-
-  senderId   String
-  receiverId String
-
-  sentAt      DateTime  @default(now())
+  id          String   @id @default(uuid())
+  content     String[] 
+  roomId      String
+  senderId    String
+  receiverId  String
+  sentAt      DateTime @default(now())
   deliveredAt DateTime?
 
-  sender   User @relation("SenderMessages", fields: [senderId], references: [id])
-  receiver User @relation("ReceiverMessages", fields: [receiverId], references: [id])
+  room        Room   @relation(fields: [roomId], references: [id])
+  sender      User   @relation("SenderMessages", fields: [senderId], references: [id])
+  receiver    User   @relation("ReceiverMessages", fields: [receiverId], references: [id])
 
-  status MessageStatus @default(SENT)
+  status      MessageStatus @default(SENT)
+
+  @@index([roomId])
+  @@index([senderId])
+  @@index([receiverId])
 }
 
 model Room {

@@ -4,6 +4,13 @@ import { useRecoilValue } from "recoil";
 import userAccountState from "../recoil/States";
 import { deplUrlHttp } from "../config";
 import Loader from "./Loader";
+import { Avatar } from "./Avatar";
+
+interface sender {
+  id:string;
+  username: string;
+  name:string;
+}
 
 interface FriendRequests {
   id: string;
@@ -11,6 +18,7 @@ interface FriendRequests {
   receiverId: string;
   status: string;
   sentAt: string;
+  sender: sender
 }
 
 const FriendRequests = ({ handleToggleFriendRequests }: { handleToggleFriendRequests: () => void }) => {
@@ -74,22 +82,25 @@ const FriendRequests = ({ handleToggleFriendRequests }: { handleToggleFriendRequ
   };
 
   return (
-    <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-lg relative">
+    <div className="w-full z-10 max-w-md bg-teal-900 p-6 rounded-lg shadow-lg relative">
       <button
         onClick={handleToggleFriendRequests}
-        className="absolute top-2 right-2 text-gray-800 text-2xl hover:text-gray-600"
+        className="absolute top-2 right-2 text-gray-200 text-2xl hover:text-gray-100"
       >
         &times;
       </button>
-      <h2 className="text-xl font-semibold mb-4">Friend Requests</h2>
+      <h2 className="text-xl font-semibold mb-4 text-white">Friend Requests</h2>
       
       {loading ? (
         <Loader /> // Show Loader while fetching data
       ) : requests.length > 0 ? (
-        <ul className="list-disc pl-5 flex flex-col justify-center items-center gap-2">
+        <ul className="list-disc pl-5 flex flex-col justify-center items-between gap-2">
           {requests.map((request) => (
             <li key={request.id} className="flex justify-between items-center mb-2">
-              <span className="text-gray-800">{request.senderId}</span>
+              <div className=" flex items-center justify-center gap-2">
+                <Avatar authenticatedUser={request.sender.name} />
+                <span className="text-gray-100 ">{request.sender.name}</span>
+              </div>
               <div className="flex">
                 <button onClick={()=>handleAccept(request.id)} className="py-1 px-3 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50">
                   Accept
@@ -102,7 +113,7 @@ const FriendRequests = ({ handleToggleFriendRequests }: { handleToggleFriendRequ
           ))}
         </ul>
       ) : (
-        <p>No friend requests</p>
+        <p className=" text-white/50">No friend requests</p>
       )}
     </div>
   );
