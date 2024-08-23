@@ -295,8 +295,10 @@ router.post('/getOrCreateRoom' , async(req,res)=>{
     try {
         const isFriendshipExist = await prisma.friends.findFirst({
             where : {
-                userId,
-                friendId
+             OR :[
+                    {userId,friendId},
+                    {userId: friendId , friendId :userId}
+                ]
             }
         })
         if(!isFriendshipExist){
@@ -304,24 +306,34 @@ router.post('/getOrCreateRoom' , async(req,res)=>{
                 error: "you are not friends with this user"
             })  
         }
-        let room = await prisma.room.findFirst({
+
+        let rooms = await prisma.room.findMany({
             where : {
+                isGroup : false,
                 participants : {
-                    every : {
+                    every: {
                         id: {
-                            in : [userId , friendId]
-                        }
-                    }
+                            in: [userId, friendId],
+                        },
+                    },
                 }
+            },
+            include : {
+                participants: true
             }
         })
+        let room = rooms.find((r) => r.participants.length === 2);
 
         if(!room){
             room = await prisma.room.create({
                 data: {
+                    isGroup : false,
                     participants : {
-                        connect : [{id: userId}. {id: friendId}]
+                        connect : [{id: userId}, {id: friendId}]
                     }
+                },
+                include: {
+                    participants: true
                 }
             })
         }
@@ -335,15 +347,59 @@ router.post('/getOrCreateRoom' , async(req,res)=>{
 //-------------------------------------------- SEND OR RECIEVE MESSAGE---------------------------------
 router.post('/sendMessage' , async (req,res)=>{
     const { roomId, senderId, receiverId, content } = req.body;
+
+    if (!roomId || !senderId || !receiverId || !content) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+    const room = await prisma.room.findUnique({
+        where: { id: roomId },
+    });
+    
+    if (!room) {
+        return res.status(400).json({ error: "Room does not exist" });
+    }
+
     try{
         const message =  await prisma.message.create({
             data : {
                 content,
                 senderId,
                 receiverId,
-                roomId
+                roomId,
+                sentAt: new Date().toISOString(),
             }
         })
+        return res.status(201).json({message});
+    }catch(e){
+        console.log('Message not delivered',e);
+        return res.status(500).json({error: "internal server error , Message not delivered"})
+    }
+})
+
+//-------------------------------------------------------FETCH MESSAGE----------------------------------
+router.get('/fetchMessage', async (req,res)=>{
+    const roomId  = req.query.roomId as string;
+    if (!roomId) {
+        return res.status(400).json({ error: "Room ID is required" });
+    }
+    try {
+        const messages = await prisma.message.findMany({
+            where: { roomId: roomId },
+            orderBy: { sentAt: 'asc' },
+            include: {
+                sender: {
+                    select: { name: true }, // Including sender's name
+                },
+                receiver: {
+                    select: { name: true }, // Including receiver's name
+                },
+            },
+        });
+
+        return res.status(200).json({ messages });
+    } catch (e) {
+        console.error('Error fetching messages', e);
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 })
 

@@ -1,16 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import EmojiPicker from 'emoji-picker-react';
+import { deplUrlHttp } from '../config';
+import { useRecoilValue } from 'recoil';
+import userAccountState from '../recoil/States';
+import axios from 'axios';
+import { message } from '../pages/Chat';
 
 interface SendMessageProps{
     value : string;
     setValue : (value : string)=>void;
     handleSendMessage : (value:string)=>void;
     inputRef: React.MutableRefObject<HTMLTextAreaElement | null>
+    chatId: string
+    selectedFriendId: string;
+    setMessages:React.Dispatch<React.SetStateAction<message[]>>;
 }
 
-const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMessage , inputRef}) => {
+const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMessage , inputRef,chatId ,selectedFriendId ,setMessages}) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
     const [openEmote , setOpenEmote] = useState<boolean>(false);
+    const  userAccount = useRecoilValue(userAccountState);
 
     const handleEmojiClick = (emoji:any)=>{
         console.log(emoji); 
@@ -32,10 +41,39 @@ const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMe
           setDebouncedValue(e.target.value);
       };
 
-      const sendMessage = () => {
-        handleSendMessage(debouncedValue);
-        setValue(''); 
-        setDebouncedValue('');
+      const sendMessage = async() => {
+        if (!debouncedValue || !chatId) return;
+        console.log('userId',userAccount.userId , "chatId: ",chatId, 'content', debouncedValue, 'recieverId: ',selectedFriendId)
+
+        const newMessage = {
+            content: debouncedValue,
+            senderId: userAccount.userId,
+            receiverId: selectedFriendId,
+            roomId: chatId,
+            sentAt: new Date().toISOString(),
+        };
+    
+        // Optimistically update the UI with the new message
+        setMessages((prev:any) => [...prev, newMessage]);
+
+        try {
+            const response = await axios.post(`${deplUrlHttp}/api/sendMessage`, {
+                roomId: chatId,
+                senderId: userAccount.userId, // Assuming userAccount holds the current user's info
+                content: debouncedValue,
+                receiverId: selectedFriendId
+            });
+    
+            if (response.data) {
+                handleSendMessage(debouncedValue); // Update the UI with the new message
+                setValue(''); 
+                setDebouncedValue('');
+            } else {
+                console.error('Message sending failed');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+        }
     };
 
     return (

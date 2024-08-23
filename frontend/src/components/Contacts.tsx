@@ -1,4 +1,9 @@
+import { useRecoilValue } from "recoil";
+import userAccountState from "../recoil/States";
 import { Avatar } from "./Avatar";
+import axios from "axios";
+import { deplUrlHttp } from "../config";
+import { useEffect } from "react";
 
 interface friend {
     id:string;
@@ -6,10 +11,43 @@ interface friend {
     name:string;
 }
 
-const Contacts = ({friend ,setChatId}:{friend: friend,setChatId:(value:string)=>void})=>{
+const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setMessages}:{friend: friend,setChatId:(value:string)=>void ,setSelectedFriendId: (value: string)=>void , chatId:string ,setMessages: (value:any)=>void})=>{
 
-    const handleSettingChatId=(id:string)=>{
-        setChatId(id);
+    const userAccount = useRecoilValue(userAccountState);
+
+
+    useEffect(()=>{
+        const fetchMessages = async()=>{
+            try{
+                const response = await axios.get(`${deplUrlHttp}/api/fetchMessage`,{
+                    params : {
+                        roomId: chatId
+                    }
+                });
+                console.log(response);
+                setMessages(response.data.messages)
+            }catch(e){
+                console.log('Error while fetching messages');
+            }
+        }
+        fetchMessages();
+
+    },[chatId])
+
+
+
+    const handleSettingChatId= async (id:string)=>{
+        try{
+            const response = await axios.post(`${deplUrlHttp}/api/getOrCreateRoom`,{
+                userId: userAccount.userId,
+                friendId: id
+            })
+            console.log('chatId: ',response.data.room.id);
+            setChatId(response.data.room.id);
+            setSelectedFriendId(id);
+        }catch(e){
+            console.error('Handle setting Chat Id')
+        }
     }
 
     return (

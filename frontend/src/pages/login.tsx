@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import axios from 'axios'
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { useRecoilState } from 'recoil';
 import { deplUrlHttp } from "../config";
@@ -26,16 +26,30 @@ const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| nu
     localStorage.setItem('token',response.data.token);
     setToken(localStorage.getItem("token"));
     setUserAccount({
-      sender: '',
-      receiver: '',
-      content: '',
-      status: '',
+      ...userAccount,
       userId: response.data.user.id,
-      sentAt: '',
       username: response.data.user.name
     })
+    localStorage.setItem('userAccount',JSON.stringify({...userAccount,userId: response.data.user.id,username: response.data.user.name}));
     navigate("/chat")
   }
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   const storedUserAccount = localStorage.getItem('userAccount');
+  
+  //   if (token && storedUserAccount) {
+  //     setToken(token);
+  //     setAuthenticatedUser(JSON.parse(storedUserAccount).name);
+  //     setUserAccount(JSON.parse(storedUserAccount));
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   if (userAccount.userId) {
+  //     localStorage.setItem('userAccount', JSON.stringify(userAccount));
+  //   }
+  // }, [userAccount]);
   
   const navigate = useNavigate();
   console.log(userAccount)

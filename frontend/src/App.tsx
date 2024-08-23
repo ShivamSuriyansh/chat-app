@@ -70,14 +70,15 @@ function App() {
 
   const send = (value : string)=>{
     if(!value)return;
-    console.log(value);
+    console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&',value);
     socket?.send(value)
+
   }
 
   useEffect(()=>{
     socket? socket.onmessage = (message)=>{
-      console.log('#############',message.data);
       setMessage((prev :any)=> [...prev , message.data]);
+      console.log('#############',message.data, message);
     } : console.log('nothing');
   },[socket])
 
@@ -87,8 +88,10 @@ function App() {
   //   </div>
   // }
 
+  console.log(message)
 
-  return <div className=' w-full px-1 py-2 m-auto flex justify-center h-screen bg-white items-center' >
+
+  return <div className=' w-full px-1 m-auto flex justify-center h-screen bg-white items-center' >
 
     <BrowserRouter>
       <Routes>

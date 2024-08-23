@@ -43,7 +43,7 @@ model Friends {
 }
 model Message {
   id          String   @id @default(uuid())
-  content     String[] 
+  content     String 
   roomId      String
   senderId    String
   receiverId  String
@@ -63,6 +63,8 @@ model Message {
 
 model Room {
   id           String    @id @default(uuid())
+  name         String?  
+  isGroup      Boolean   @default(false)
   messages     Message[]
   participants User[]    @relation("UserRooms")
 }

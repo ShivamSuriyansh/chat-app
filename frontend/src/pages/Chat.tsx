@@ -26,6 +26,17 @@ export interface FriendsResponse {
     friend: Friend;
 }
 
+export interface message {
+    content:string;
+    deliveredAt:string
+    id: string
+    receiverId :string
+    roomId :string
+    senderId : string
+    sentAt:string
+    status : string
+}
+
 
 const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, send :(value:string)=>void, value :string, setValue : (value:string)=>void, authenticatedUser:string}) => {
     const [friendList , setFriendList] = useState<FriendsResponse[] | null>(null);
@@ -34,16 +45,31 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
     const [openFriendRequests, setOpenFriendRequests] = useState<boolean>(false);
     const [showToast, setShowToast] = useState<boolean>(false);
     const [chatId , setChatId] = useState<string>('');
+    const [selectedFriendId , setSelectedFriendId] = useState<string>('');
+    const [messages, setMessages] = useState<message[]>([]);
     
     const messageEndRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
     
     const navigate = useNavigate();
     useEffect(() => {
-        if (!authenticatedUser && !localStorage.getItem('token')) {
+        const storedToken = localStorage.getItem('token');
+        const storedUserAccount = localStorage.getItem('userAccount');
+
+        if (!authenticatedUser && !storedToken){
             navigate('/login');
+        }else {
+            // Restore user account from localStorage if available
+            if (storedUserAccount) {
+                const parsedAccount = JSON.parse(storedUserAccount);
+                setUserAccount(parsedAccount);
+            }
         }
-    }, [authenticatedUser]);
+    }, [authenticatedUser,navigate,setUserAccount]);
+
+    useEffect(() => {
+        localStorage.setItem('userAccount', JSON.stringify(userAccount));
+    }, [userAccount]);
 
 
     useEffect(() => {
@@ -51,7 +77,8 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
             messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         };
         scrollBottom();
-    }, [text]);
+        console.log(messages)
+    }, [messages]);
 
 
     const handleSendMessage = (value: string) => {
@@ -59,6 +86,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
         const message = {
             value,
             username: authenticatedUser,
+            chatId
         };
         setUserAccount((prev) => {
             const updatedAccount = {
@@ -66,13 +94,14 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
                 content: value,
                 sentAt: new Date().toISOString(),
                 sender: prev.userId,
+                chatId: chatId
             };
 
             send(JSON.stringify(updatedAccount)); 
             return updatedAccount;
         });
         setValue('');
-        inputRef.current?.focus(); 
+        inputRef.current?.focus();
     };
 
 
@@ -109,11 +138,8 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
         }
 
         getFriends();
-    },[openFriendRequests,userAccount.userId])
+    },[openFriendRequests,userAccount.userId,userAccount])
 
-    useEffect(()=>{
-        console.log('Chat ID: -------> ',chatId)
-    },[chatId])
 
 
 
@@ -128,7 +154,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
             <div className=" friends h-screen w-[30rem] bg-slate-900">
                 {friendList?.map((friend,i)=>(
                     <div key={i}>
-                        <Contacts friend={friend.friend} setChatId={setChatId} />
+                        <Contacts setMessages={setMessages} chatId={chatId} setSelectedFriendId={setSelectedFriendId} friend={friend.friend} setChatId={setChatId} />
                     </div>
                 ))}
             </div>
@@ -155,10 +181,10 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
                 </div>
                 <div className="bg-slate-100 w-[50rem] px-1 py-2 rounded-xl flex flex-col gap-4 max-h-[30rem] overflow-auto min-h-[30rem] shadow-lg custom-scrollbar">
                     <div className="message w-full">
-                        {text && text.map((msg: any, i: number) => {
+                        {messages && messages.map((msg: message, i: number) => {
                             return (
                                 <div key={i}>
-                                    <Message msg={msg} authenticatedUser={authenticatedUser} previousUsername={text[i - 1]} />
+                                    <Message msg={msg} authenticatedUser={authenticatedUser} previousUsername={messages[i - 1]} />
                                 </div>
                             );
                         })}
@@ -166,7 +192,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
                     </div>
                 </div>
                 <div className="send-input flex gap-2 w-full mt-3 shadow-2xl">
-                    <SendMessage value={value} setValue={setValue} handleSendMessage={handleSendMessage} inputRef={inputRef} />
+                    <SendMessage setMessages={setMessages} selectedFriendId={selectedFriendId} chatId={chatId} value={value} setValue={setValue} handleSendMessage={handleSendMessage} inputRef={inputRef} />
                 </div>
             </div>
         </div>
