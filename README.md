@@ -13,7 +13,7 @@ npx prisma migrate dev
 ```
 5) After migrating the database , you would need to generate the prisma client 
 ```
-npx prisa generate
+npx prisma generate
 ```
 6) This will generate the client and you are good to go
 7) For backend to start , run:  /if you dont have typescript installed already , run : npm install -g typescript
