@@ -35,10 +35,16 @@ export interface message {
     senderId : string
     sentAt:string
     status : string
+    sender: {
+        name: string
+    }
+    receiver: {
+        name: string
+    }
 }
 
 
-const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, send :(value:string)=>void, value :string, setValue : (value:string)=>void, authenticatedUser:string}) => {
+const Chat = ({ text, send, value, setValue, authenticatedUser,setText }:{text : any, send :(value:any)=>void, value :string, setValue : (value:string)=>void, authenticatedUser:string,setText: (prev:any)=>void}) => {
     const [friendList , setFriendList] = useState<FriendsResponse[] | null>(null);
     const [userAccount, setUserAccount] = useRecoilState(userAccountState);
     const [openAddFriend, setOpenAddFriend] = useState<boolean>(false);
@@ -50,6 +56,8 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
     
     const messageEndRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+    console.log('text to string',text);
     
     const navigate = useNavigate();
     useEffect(() => {
@@ -78,7 +86,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
         };
         scrollBottom();
         console.log(messages)
-    }, [messages]);
+    }, [text,messages]);
 
 
     const handleSendMessage = (value: string) => {
@@ -97,7 +105,8 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
                 chatId: chatId
             };
 
-            send(JSON.stringify(updatedAccount)); 
+            // send(JSON.stringify(updatedAccount)); 
+            // send(JSON.stringify(text[text.length-1])); 
             return updatedAccount;
         });
         setValue('');
@@ -141,6 +150,24 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
     },[openFriendRequests,userAccount.userId,userAccount])
 
 
+    const handleLogout = () => {
+        setUserAccount({
+          sender: '',
+          receiver: '',
+          content: '',
+          status: '',
+          userId: '',
+          sentAt: '',
+          username: ''
+        });
+      
+        localStorage.removeItem('token');
+        localStorage.removeItem('userAccount');
+      
+        navigate('/login');
+      };
+
+
 
 
     return (
@@ -154,7 +181,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
             <div className=" friends h-screen w-[30rem] bg-slate-900">
                 {friendList?.map((friend,i)=>(
                     <div key={i}>
-                        <Contacts setMessages={setMessages} chatId={chatId} setSelectedFriendId={setSelectedFriendId} friend={friend.friend} setChatId={setChatId} />
+                        <Contacts setText={setText} setMessages={setMessages} chatId={chatId} setSelectedFriendId={setSelectedFriendId} friend={friend.friend} setChatId={setChatId} />
                     </div>
                 ))}
             </div>
@@ -178,13 +205,16 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
                     <div className="w-fit bg-teal-300 px-4 py-2 rounded-lg shadow-lg mb-3 focus:bg-teal-600 active:bg-teal-600 hover:bg-teal-500">
                         <button onClick={handleToggleFriendRequests} className="text-sm text-slate-800 font-medium">Requests</button>
                     </div>
+                    <div className="w-fit bg-red-300 px-4 py-2 rounded-lg shadow-lg mb-3 focus:bg-red-600 active:bg-teal-600 hover:bg-red-500">
+                        <button onClick={handleLogout} className="text-sm text-slate-800 font-medium">Logout</button>
+                    </div>
                 </div>
                 <div className="bg-slate-100 w-[50rem] px-1 py-2 rounded-xl flex flex-col gap-4 max-h-[30rem] overflow-auto min-h-[30rem] shadow-lg custom-scrollbar">
                     <div className="message w-full">
-                        {messages && messages.map((msg: message, i: number) => {
+                        {text && text.map((msg: message, i: number) => {
                             return (
                                 <div key={i}>
-                                    <Message msg={msg} authenticatedUser={authenticatedUser} previousUsername={messages[i - 1]} />
+                                    <Message msg={msg} authenticatedUser={authenticatedUser} previousUsername={text[i - 1]} />
                                 </div>
                             );
                         })}
@@ -192,7 +222,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser }:{text : any, se
                     </div>
                 </div>
                 <div className="send-input flex gap-2 w-full mt-3 shadow-2xl">
-                    <SendMessage setMessages={setMessages} selectedFriendId={selectedFriendId} chatId={chatId} value={value} setValue={setValue} handleSendMessage={handleSendMessage} inputRef={inputRef} />
+                    <SendMessage send={send} setMessages={setMessages} selectedFriendId={selectedFriendId} chatId={chatId} value={value} setValue={setValue} handleSendMessage={handleSendMessage} inputRef={inputRef} />
                 </div>
             </div>
         </div>

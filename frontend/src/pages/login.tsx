@@ -34,6 +34,26 @@ const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| nu
     navigate("/chat")
   }
 
+  const handleLogout = () => {
+    setToken(null);
+    setAuthenticatedUser('');
+    setUserAccount({
+      sender: '',
+      receiver: '',
+      content: '',
+      status: '',
+      userId: '',
+      sentAt: '',
+      username: ''
+    });
+  
+    localStorage.removeItem('token');
+    localStorage.removeItem('userAccount');
+  
+    navigate('/login');
+  };
+  
+
   // useEffect(() => {
   //   const token = localStorage.getItem('token');
   //   const storedUserAccount = localStorage.getItem('userAccount');

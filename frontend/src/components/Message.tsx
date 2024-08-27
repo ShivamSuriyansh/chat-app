@@ -6,7 +6,7 @@ import userAccountState from "../recoil/States";
 const Message =  ({msg ,authenticatedUser, previousUsername}:{msg : any, authenticatedUser: string, previousUsername:any}) => {
 
 
-  console.log('%%%%%%%%%%%%%',previousUsername);
+  // console.log('%%%%%%%%%%%%%',previousUsername);
   const userAccount = useRecoilValue(userAccountState)
 
 

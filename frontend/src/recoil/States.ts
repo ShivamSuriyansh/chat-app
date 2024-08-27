@@ -35,4 +35,10 @@ export const friendRequestState = atom<FriendRequest | null>({
     default: null
 })
 
+
+export const chatIdState = atom<string| null>({
+    key: 'chatIdState',
+    default: null
+})
+
 export default userAccountState;

@@ -403,4 +403,24 @@ router.get('/fetchMessage', async (req,res)=>{
     }
 })
 
+router.get('/user' , async(req,res)=>{
+    const userId = req.query.userId as string;
+    if(userId){
+        const user = await prisma.user.findFirst({
+            where : {
+                id: userId
+            }
+        })
+
+        if(user){
+            return res.status(200).json({
+                user
+            })
+        }
+        return res.status(404).json({error: "user doesn't exist"})
+    }
+
+    return res.status(500).json({erro: "invalid user id passed"})
+})
+
 export default router;

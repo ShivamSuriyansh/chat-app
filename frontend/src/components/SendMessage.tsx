@@ -14,17 +14,32 @@ interface SendMessageProps{
     chatId: string
     selectedFriendId: string;
     setMessages:React.Dispatch<React.SetStateAction<message[]>>;
+    send :(value:any)=>void
 }
 
-const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMessage , inputRef,chatId ,selectedFriendId ,setMessages}) => {
+const SendMessage:React.FC<SendMessageProps> = ({value,send , setValue , handleSendMessage , inputRef,chatId ,selectedFriendId ,setMessages}) => {
     const [debouncedValue, setDebouncedValue] = useState(value);
     const [openEmote , setOpenEmote] = useState<boolean>(false);
     const  userAccount = useRecoilValue(userAccountState);
+    const [receiver , setReceiver] = useState<string>('');
 
     const handleEmojiClick = (emoji:any)=>{
         console.log(emoji); 
         setDebouncedValue(prev => prev+ emoji.emoji)
     }
+
+    useEffect(()=>{
+        const fetchReceiver = async()=>{
+            const response = await axios.get(`${deplUrlHttp}/api/user`,{
+                params :{
+                    userId: selectedFriendId
+                }
+            });
+            console.log('After getting user: ',response)
+            setReceiver(JSON.stringify(response.data.user))
+        }
+        fetchReceiver();
+    },[selectedFriendId])
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -45,16 +60,23 @@ const SendMessage:React.FC<SendMessageProps> = ({value , setValue , handleSendMe
         if (!debouncedValue || !chatId) return;
         console.log('userId',userAccount.userId , "chatId: ",chatId, 'content', debouncedValue, 'recieverId: ',selectedFriendId)
 
-        const newMessage = {
+        const newMessage: message = {
+            id: 'unique-id', // You should generate a unique ID for the message
             content: debouncedValue,
             senderId: userAccount.userId,
             receiverId: selectedFriendId,
             roomId: chatId,
             sentAt: new Date().toISOString(),
+            deliveredAt: new Date().toISOString(), // Set appropriate delivered time
+            status: 'sent', // or another appropriate status
+            sender:{name : userAccount.username},
+            receiver: {name : JSON.parse(receiver).name}
         };
+
+        send(JSON.stringify(newMessage));
     
         // Optimistically update the UI with the new message
-        setMessages((prev:any) => [...prev, newMessage]);
+        setMessages((prev: message[]) => [...prev, newMessage]);
 
         try {
             const response = await axios.post(`${deplUrlHttp}/api/sendMessage`, {

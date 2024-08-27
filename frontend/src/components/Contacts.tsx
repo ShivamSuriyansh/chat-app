@@ -1,9 +1,10 @@
-import { useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import userAccountState from "../recoil/States";
 import { Avatar } from "./Avatar";
 import axios from "axios";
 import { deplUrlHttp } from "../config";
 import { useEffect } from "react";
+import { chatIdState } from "../recoil/States";
 
 interface friend {
     id:string;
@@ -11,30 +12,34 @@ interface friend {
     name:string;
 }
 
-const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setMessages}:{friend: friend,setChatId:(value:string)=>void ,setSelectedFriendId: (value: string)=>void , chatId:string ,setMessages: (value:any)=>void})=>{
+const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setMessages,setText}:{friend: friend,setChatId:(value:string)=>void ,setSelectedFriendId: (value: string)=>void , chatId:string ,setMessages: (value:any)=>void,setText:(prev:any)=>void})=>{
 
     const userAccount = useRecoilValue(userAccountState);
+    const [_ , setchatIdRecoil] = useRecoilState(chatIdState);
 
 
     useEffect(()=>{
         const fetchMessages = async()=>{
             try{
-                const response = await axios.get(`${deplUrlHttp}/api/fetchMessage`,{
+                if(chatId){
+                    const response = await axios.get(`${deplUrlHttp}/api/fetchMessage`,{
                     params : {
                         roomId: chatId
                     }
-                });
-                console.log(response);
-                setMessages(response.data.messages)
+                    });
+                    console.log('fetching messages: ',response);
+                    // setMessages(response.data.messages)
+                    setText(response.data.messages);
+                }else{
+                    return;
+                }
             }catch(e){
                 console.log('Error while fetching messages');
             }
         }
         fetchMessages();
 
-    },[chatId])
-
-
+    },[chatId,setText])
 
     const handleSettingChatId= async (id:string)=>{
         try{
@@ -42,8 +47,10 @@ const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setMessages}:{
                 userId: userAccount.userId,
                 friendId: id
             })
-            console.log('chatId: ',response.data.room.id);
-            setChatId(response.data.room.id);
+            const chatId = response.data.room.id;
+            console.log('chatId: ',chatId);
+            setChatId(chatId);
+            setchatIdRecoil(chatId);
             setSelectedFriendId(id);
         }catch(e){
             console.error('Handle setting Chat Id')
