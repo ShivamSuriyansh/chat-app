@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { useCallback, useEffect, useState } from 'react'
 import './App.css'
-import Chat, { message } from './pages/Chat'
+import Chat from './pages/Chat'
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Landing from './pages/Landing';
@@ -73,20 +73,21 @@ function App() {
 
   const send = (value : string)=>{
     if(!value)return;
-    console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&',value);
+    // console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&',value);
     socket?.send(value)
 
   }
+  console.log(code);
 
   useEffect(()=>{
     socket? socket.onmessage = (event)=>{
-      console.log('((((((((((((((((: ',JSON.parse(event.data))
+      // console.log('((((((((((((((((: ',JSON.parse(event.data))
       setMessage((prev :any)=> [...prev , JSON.parse(event.data)]);//change the message 
     } : console.log('nothing');
   },[message,socket])
 
 
-  return <div className=' w-full px-1 m-auto flex justify-center h-screen bg-white items-center' >
+  return <div className=' w-full px-1  flex justify-center h-screen bg-white items-center' >
 
     <BrowserRouter>
       <Routes>

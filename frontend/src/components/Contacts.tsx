@@ -12,7 +12,7 @@ interface friend {
     name:string;
 }
 
-const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setMessages,setText}:{friend: friend,setChatId:(value:string)=>void ,setSelectedFriendId: (value: string)=>void , chatId:string ,setMessages: (value:any)=>void,setText:(prev:any)=>void})=>{
+const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setText}:{friend: friend,setChatId:(value:string)=>void ,setSelectedFriendId: (value: string)=>void , chatId:string ,setMessages: (value:any)=>void,setText:(prev:any)=>void})=>{
 
     const userAccount = useRecoilValue(userAccountState);
     const [_ , setchatIdRecoil] = useRecoilState(chatIdState);
@@ -58,7 +58,7 @@ const Contacts = ({friend ,setChatId ,setSelectedFriendId,chatId ,setMessages,se
     }
 
     return (
-        <div onClick={()=>handleSettingChatId(friend.id)} className=" flex justify-center items-center p-1 active:bg-slate-700 transition-all duration-500 ease-out active:text-slate-900">
+        <div onClick={()=>handleSettingChatId(friend.id)} className=" flex justify-center items-center p-1 active:bg-slate-700 transition-all duration-500 ease-out active:text-slate-900 active:px-2 active:py-2">
             <div className="  flex flex-col gap-2  px-2 py-1 border-slate-500 h-fit w-[30rem] ">
                 <div className=" flex justify-start items-center gap-5">
                     <div className=" p-1 bg-slate-400 rounded-full">

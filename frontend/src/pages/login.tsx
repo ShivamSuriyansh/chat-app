@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import axios from 'axios'
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import { useRecoilState } from 'recoil';
 import { deplUrlHttp } from "../config";
@@ -34,24 +34,7 @@ const Login = ({setToken ,setAuthenticatedUser} : {setToken : (token: string| nu
     navigate("/chat")
   }
 
-  const handleLogout = () => {
-    setToken(null);
-    setAuthenticatedUser('');
-    setUserAccount({
-      sender: '',
-      receiver: '',
-      content: '',
-      status: '',
-      userId: '',
-      sentAt: '',
-      username: ''
-    });
   
-    localStorage.removeItem('token');
-    localStorage.removeItem('userAccount');
-  
-    navigate('/login');
-  };
   
 
   // useEffect(() => {

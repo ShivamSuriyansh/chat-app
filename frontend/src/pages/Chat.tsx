@@ -57,7 +57,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser,setText }:{text :
     const messageEndRef = useRef<HTMLDivElement | null>(null);
     const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-    console.log('text to string',text);
+    // console.log('text to string',text);
     
     const navigate = useNavigate();
     useEffect(() => {
@@ -91,11 +91,7 @@ const Chat = ({ text, send, value, setValue, authenticatedUser,setText }:{text :
 
     const handleSendMessage = (value: string) => {
         if (!value) return;
-        const message = {
-            value,
-            username: authenticatedUser,
-            chatId
-        };
+        
         setUserAccount((prev) => {
             const updatedAccount = {
                 ...prev,
@@ -145,7 +141,6 @@ const Chat = ({ text, send, value, setValue, authenticatedUser,setText }:{text :
                 console.log('error while fetching friends: ',e);
             }
         }
-
         getFriends();
     },[openFriendRequests,userAccount.userId,userAccount])
 
@@ -171,21 +166,29 @@ const Chat = ({ text, send, value, setValue, authenticatedUser,setText }:{text :
 
 
     return (
-        <>
+        <div className=" h-screen overflow-auto px-2 mx-2">
         {showToast && (
             <div className="fixed top-4 right-4">
                 <Toast message="Friend Request Sent" onClose={() => setShowToast(false)} />
             </div>
         )}
-        <div className=" flex gap-10">
-            <div className=" friends h-screen w-[30rem] bg-slate-900">
+        <div className=" flex gap-10 ">
+            <div className=" friends h-[40rem] w-[30rem] rounded-lg bg-slate-900">
+                <div className=" flex justify-between text-slate-200 p-3 text-xl border-b-2  border-slate-200 ">
+                    <span>
+                        Friends:
+                    </span>
+                    <div>
+                        Search
+                    </div>
+                </div>
                 {friendList?.map((friend,i)=>(
                     <div key={i}>
                         <Contacts setText={setText} setMessages={setMessages} chatId={chatId} setSelectedFriendId={setSelectedFriendId} friend={friend.friend} setChatId={setChatId} />
                     </div>
                 ))}
             </div>
-            <div className="flex flex-col gap-2 overflow-y-auto scroll-smooth transition-all duration-150  mt-[5rem] min-w-fit">
+            <div className="flex flex-col gap-2 overflow-y-auto scroll-smooth transition-all duration-150 min-w-fit">
                 {openAddFriend && (
                     <div className="fixed inset-0 flex items-center justify-center z-10 bg-gray-900 bg-opacity-50">
                         <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -209,24 +212,24 @@ const Chat = ({ text, send, value, setValue, authenticatedUser,setText }:{text :
                         <button onClick={handleLogout} className="text-sm text-slate-800 font-medium">Logout</button>
                     </div>
                 </div>
-                <div className="bg-slate-100 w-[50rem] px-1 py-2 rounded-xl flex flex-col gap-4 max-h-[30rem] overflow-auto min-h-[30rem] shadow-lg custom-scrollbar">
+                <div className="bg-slate-100 h-[32rem] w-[50rem] px-1 py-2 rounded-xl flex flex-col gap-4 overflow-auto shadow-lg custom-scrollbar">
                     <div className="message w-full">
                         {text && text.map((msg: message, i: number) => {
                             return (
                                 <div key={i}>
-                                    <Message msg={msg} authenticatedUser={authenticatedUser} previousUsername={text[i - 1]} />
+                                    <Message msg={msg} previousUsername={text[i - 1]} />
                                 </div>
                             );
                         })}
                         <div ref={messageEndRef} />
                     </div>
                 </div>
-                <div className="send-input flex gap-2 w-full mt-3 shadow-2xl">
+                <div className="send-input flex gap-2 w-full shadow-2xl">
                     <SendMessage send={send} setMessages={setMessages} selectedFriendId={selectedFriendId} chatId={chatId} value={value} setValue={setValue} handleSendMessage={handleSendMessage} inputRef={inputRef} />
                 </div>
             </div>
         </div>
-        </>
+        </div>
     );
 }
 

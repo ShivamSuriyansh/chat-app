@@ -3,7 +3,7 @@ import { Avatar } from "./Avatar"
 import userAccountState from "../recoil/States";
 
 
-const Message =  ({msg ,authenticatedUser, previousUsername}:{msg : any, authenticatedUser: string, previousUsername:any}) => {
+const Message =  ({msg, previousUsername}:{msg : any, previousUsername:any}) => {
 
 
   // console.log('%%%%%%%%%%%%%',previousUsername);
